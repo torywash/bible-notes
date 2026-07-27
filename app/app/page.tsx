@@ -1,28 +1,56 @@
-import Image from "next/image";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+"use client";
+
+import { useState } from "react";
+
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SearchBar } from "@/components/search-bar";
+import { NoteCard } from "@/components/notes/note-card";
+import { NoteModal } from "@/components/notes/note-modal";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
-  const noteTitle = "Note Title => How to Cope";
-  const noteVerse = "Note Verse => Proverbs 10:12";
-  const noteAction = "View Note";
-  const noteContent =
-    "Note Content => Coping with stress and anxiety can be challenging, but there are several strategies that can help. Some effective techniques include practicing mindfulness, engaging in regular physical activity, maintaining a healthy diet, getting enough sleep, and seeking support from friends, family, or mental health professionals. It's important to find what works best for you and to be patient with yourself as you navigate through difficult times.";
-  const noteFooter =
-    "Note Footer => This is a note about coping with stress and anxiety.";
+  const [search, setSearch] = useState("");
+  const [openNoteId, setOpenNoteId] = useState<string | null>(null);
+
+  // TODO: replace with real notes state, e.g. seeded from + synced to localStorage
+  const notes: {
+    id: string;
+    title: string;
+    verse: string;
+    book: string;
+    content: string;
+  }[] = [];
 
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        
-      </main>
-    </div>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex items-center gap-3 border-b p-4">
+          <SidebarTrigger />
+          <Separator orientation="vertical" className="h-6" />
+          <SearchBar value={search} onChange={setSearch} />
+          {/* TODO: "New Note" button that opens NoteModal in create mode */}
+          <Button>New Note</Button>
+        </header>
+        <main className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
+          {notes.map((note) => (
+            <NoteCard
+              key={note.id}
+              title={note.title}
+              verse={note.verse}
+              book={note.book}
+              content={note.content}
+              onOpen={() => setOpenNoteId(note.id)}
+            />
+          ))}
+        </main>
+      </SidebarInset>
+      <NoteModal
+        open={openNoteId !== null}
+        onOpenChange={(open) => !open && setOpenNoteId(null)}
+      />
+    </SidebarProvider>
   );
 }
