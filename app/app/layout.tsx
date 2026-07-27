@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bible Notes",
+  title: "FaithOS",
 };
 
 export default function RootLayout({

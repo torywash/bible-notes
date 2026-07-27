@@ -17,7 +17,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <span className="px-2 text-sm font-semibold">Bible Notes</span>
+        <span className="px-2 text-sm font-semibold">FaithOS</span>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
