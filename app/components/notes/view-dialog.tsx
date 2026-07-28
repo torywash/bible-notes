@@ -32,11 +32,10 @@ export function NoteViewDialog({
                     <DialogDescription>{note?.verse}</DialogDescription>
                 </DialogHeader>
                 <p className="whitespace-pre-wrap text-sm">{note?.content}</p>
-                <DialogFooter>
-                    {/* delete trigger goes here — see Part 1 */}
+                <DialogFooter className="flex-row justify-end">
                     <Button variant="outline" onClick={onEdit}>Edit</Button>
                     <AlertDialog>
-                        <AlertDialogTrigger render={<Button variant="destructive" size="sm" />}>
+                        <AlertDialogTrigger render={<Button variant="destructive" />}>
                             Delete
                         </AlertDialogTrigger>
                         <AlertDialogContent>

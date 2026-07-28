@@ -5,7 +5,6 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  CardAction,
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
@@ -33,9 +32,6 @@ export function NoteCard({
       <CardHeader>
         <CardTitle className="line-clamp-1">{title}</CardTitle>
         <CardDescription className="line-clamp-1 min-h-[1.25rem]">{verse}</CardDescription>
-        <CardAction>
-          {/* TODO: dropdown-menu for edit/delete, or drop this and rely on onOpen */}
-        </CardAction>
       </CardHeader>
       <CardContent>
         <p className="line-clamp-3 min-h-[3.75rem] max-h-[3.75rem] text-sm text-muted-foreground">

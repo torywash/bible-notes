@@ -29,8 +29,12 @@ function AlertDialogOverlay({
   return (
     <AlertDialogPrimitive.Backdrop
       data-slot="alert-dialog-overlay"
+      // Base UI skips rendering a nested dialog's own backdrop by default
+      // (relying on the parent dialog's), but the delete confirmation needs
+      // its own dim/blur even when opened from inside the note-view dialog.
+      forceRender
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 isolate z-50 bg-black/25 backdrop-blur-sm duration-100 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className
       )}
       {...props}

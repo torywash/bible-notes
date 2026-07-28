@@ -9,6 +9,7 @@ import { SearchBar } from "@/components/search-bar";
 import { NoteCard } from "@/components/notes/note-card";
 import { NoteModal, type NoteFormValues } from "@/components/notes/note-modal";
 import { NoteViewDialog } from "@/components/notes/view-dialog";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -130,6 +131,7 @@ export default function Home() {
             </DropdownMenuContent>
           </DropdownMenu>
           <Button onClick={() => setIsCreating(true)}>New Note</Button>
+          <ThemeToggle />
         </header>
         <main className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredNotes.length === 0 ? (
