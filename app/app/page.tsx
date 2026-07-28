@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SearchBar } from "@/components/search-bar";
 import { NoteCard } from "@/components/notes/note-card";
 import { NoteModal, type NoteFormValues } from "@/components/notes/note-modal";
+import { NoteViewDialog } from "@/components/notes/view-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,7 +21,8 @@ import { BIBLE_BOOKS } from "@/lib/scripture";
 
 export default function Home() {
   const [search, setSearch] = useState("");
-  const [openNoteId, setOpenNoteId] = useState<string | null>(null);
+  const [viewingNoteId, setViewingNoteId] = useState<string | null>(null);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [notes, setNotes] = useState<Note[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -50,7 +52,8 @@ export default function Home() {
     }
   }, [notes, hasLoaded]);
 
-  const editingNote = notes.find((note) => note.id === openNoteId);
+  const viewingNote = notes.find((note) => note.id === viewingNoteId);
+  const editingNote = notes.find((note) => note.id === editingNoteId);
 
   const filteredNotes = notes.filter((note) => {
     const q = search.trim().toLowerCase();
@@ -77,6 +80,10 @@ export default function Home() {
         ...prev,
       ]);
     }
+  }
+
+  function handleDelete(id: string) {
+    setNotes((prev) => prev.filter((note) => note.id !== id));
   }
 
   const bookCounts = new Map<string, number>();
@@ -138,21 +145,38 @@ export default function Home() {
                 book={note.book}
                 category={note.category}
                 content={note.content}
-                onOpen={() => setOpenNoteId(note.id)}
+                onOpen={() => setViewingNoteId(note.id)}
               />
             ))
           )}
         </main>
       </SidebarInset>
       <NoteModal
-        open={openNoteId !== null || isCreating}
+        open={editingNoteId !== null || isCreating}
         initialValues={editingNote}
         onSave={handleSave}
         onOpenChange={(open) => {
           if (!open) {
-            setOpenNoteId(null);
+            setEditingNoteId(null);
             setIsCreating(false);
           }
+        }}
+      />
+      <NoteViewDialog
+        note={viewingNote}
+        open={viewingNoteId !== null}
+        onOpenChange={(open) => {
+          if (!open) setViewingNoteId(null);
+        }}
+        onEdit={() => {
+          if (!viewingNote) return;
+          setViewingNoteId(null);
+          setEditingNoteId(viewingNote.id);
+        }}
+        onDelete={() => {
+          if (!viewingNote) return;
+          handleDelete(viewingNote.id);
+          setViewingNoteId(null);
         }}
       />
     </SidebarProvider>
