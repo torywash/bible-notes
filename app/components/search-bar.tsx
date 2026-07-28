@@ -12,7 +12,7 @@ export function SearchBar({
   onChange: (value: string) => void;
 }) {
   return (
-    <InputGroup className="max-w-sm">
+    <InputGroup className="h-9 max-w-md">
       <InputGroupAddon>
         <SearchIcon />
       </InputGroupAddon>

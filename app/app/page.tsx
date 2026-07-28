@@ -99,39 +99,41 @@ export default function Home() {
   // books: [string, number][]  → e.g. [["Genesis", 2], ["Proverbs", 5]], canonical order, non-Bible entries (e.g. "Prayer") last
 
   return (
-    <SidebarProvider>
+    <SidebarProvider style={{ "--sidebar-width": "18rem" } as React.CSSProperties}>
       <AppSidebar books={books} activeBook={bookFilter} onSelectBook={setBookFilter} />
       <SidebarInset>
-        <header className="flex items-center gap-3 border-b p-4">
-          <SidebarTrigger />
-          <Separator orientation="vertical" className="h-6" />
-          <SearchBar value={search} onChange={setSearch} />
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button variant="outline">
-                  Tags{categoryFilter.length > 0 ? ` (${categoryFilter.length})` : ""}
-                </Button>
-              }
-            />
-            <DropdownMenuContent>
-              {NOTE_CATEGORIES.map((c) => (
-                <DropdownMenuCheckboxItem
-                  key={c}
-                  checked={categoryFilter.includes(c)}
-                  onCheckedChange={(checked) =>
-                    setCategoryFilter((prev) =>
-                      checked ? [...prev, c] : prev.filter((x) => x !== c)
-                    )
-                  }
-                >
-                  {c}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button onClick={() => setIsCreating(true)}>New Note</Button>
-          <ThemeToggle />
+        <header className="flex items-center gap-4 border-b p-5">
+          <SidebarTrigger size="icon-lg" />
+          <Separator orientation="vertical" className="h-8" />
+          <div className="ml-auto flex items-center gap-4">
+            <SearchBar value={search} onChange={setSearch} />
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="outline" size="lg">
+                    Tags{categoryFilter.length > 0 ? ` (${categoryFilter.length})` : ""}
+                  </Button>
+                }
+              />
+              <DropdownMenuContent>
+                {NOTE_CATEGORIES.map((c) => (
+                  <DropdownMenuCheckboxItem
+                    key={c}
+                    checked={categoryFilter.includes(c)}
+                    onCheckedChange={(checked) =>
+                      setCategoryFilter((prev) =>
+                        checked ? [...prev, c] : prev.filter((x) => x !== c)
+                      )
+                    }
+                  >
+                    {c}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button size="lg" onClick={() => setIsCreating(true)}>New Note</Button>
+            <ThemeToggle />
+          </div>
         </header>
         <main className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredNotes.length === 0 ? (
