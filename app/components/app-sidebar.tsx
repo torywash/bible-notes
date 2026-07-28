@@ -12,8 +12,17 @@ import {
   SidebarMenuButton,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
 
-export function AppSidebar() {
+export function AppSidebar({
+  books,
+  activeBook,
+  onSelectBook,
+}: {
+  books: [string, number][];
+  activeBook: string | null;
+  onSelectBook: (book: string | null) => void;
+}) {
   return (
     <Sidebar>
       <SidebarHeader>
@@ -24,10 +33,27 @@ export function AppSidebar() {
           <SidebarGroupLabel>Books</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* TODO: "All Notes" + one SidebarMenuButton per book/category, wired to a filter state */}
               <SidebarMenuItem>
-                <SidebarMenuButton isActive>All Notes</SidebarMenuButton>
+                <SidebarMenuButton
+                  isActive={activeBook === null}
+                  onClick={() => onSelectBook(null)}
+                >
+                  All Notes
+                </SidebarMenuButton>
               </SidebarMenuItem>
+              {books.map(([book, count]) => (
+                <SidebarMenuItem key={book}>
+                  <SidebarMenuButton
+                    isActive={activeBook === book}
+                    onClick={() => onSelectBook(book)}
+                  >
+                    {book}
+                    <Badge variant="secondary" className="ml-auto">
+                      {count}
+                    </Badge>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

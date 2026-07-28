@@ -11,17 +11,20 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { NoteCategory } from "@/lib/types";
 
 export function NoteCard({
   title,
   verse,
   book,
+  category,
   content,
   onOpen,
 }: {
   title: string;
   verse: string;
   book: string;
+  category: NoteCategory;
   content: string;
   onOpen: () => void;
 }) {
@@ -35,10 +38,15 @@ export function NoteCard({
         </CardAction>
       </CardHeader>
       <CardContent>
-        <p className="line-clamp-3 text-sm text-muted-foreground">{content}</p>
+        <p className="line-clamp-3 min-h-[3.75rem] max-h-[3.75rem] text-sm text-muted-foreground">
+          {content}
+        </p>
       </CardContent>
       <CardFooter className="justify-between">
-        <Badge variant="secondary">{book}</Badge>
+        <div className="flex gap-2">
+          <Badge variant="secondary">{book}</Badge>
+          <Badge variant="outline">{category}</Badge>
+        </div>
         <Button variant="link" size="sm" onClick={onOpen}>
           View Note
         </Button>

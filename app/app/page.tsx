@@ -9,14 +9,13 @@ import { SearchBar } from "@/components/search-bar";
 import { NoteCard } from "@/components/notes/note-card";
 import { NoteModal, type NoteFormValues } from "@/components/notes/note-modal";
 import { Button } from "@/components/ui/button";
-
-type Note = {
-  id: string;
-  title: string;
-  verse: string;
-  book: string;
-  content: string;
-};
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { NOTE_CATEGORIES, type Note, type NoteCategory } from "@/lib/types";
 
 export default function Home() {
   const [search, setSearch] = useState("");
@@ -24,22 +23,47 @@ export default function Home() {
   const [isCreating, setIsCreating] = useState(false);
   const [notes, setNotes] = useState<Note[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [bookFilter, setBookFilter] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<NoteCategory[]>([]);
 
   // runs once, after the component mounts in the browser
   useEffect(() => {
-    const saved = localStorage.getItem("notes");
-    if (saved) setNotes(JSON.parse(saved));
-    setHasLoaded(true);
+    try {
+      const saved = localStorage.getItem("notes");
+      if (saved) setNotes(JSON.parse(saved));
+    } catch (error) {
+      console.error("Failed to load notes from localStorage:", error);
+    } finally {
+      setHasLoaded(true);
+    }
   }, []);
 
   // runs every time `notes` changes, writing it back out
   // (skipped until the load above finishes, so it never clobbers storage with the empty initial state)
   useEffect(() => {
     if (!hasLoaded) return;
-    localStorage.setItem("notes", JSON.stringify(notes));
+    try {
+      localStorage.setItem("notes", JSON.stringify(notes));
+    } catch (error) {
+      console.error("Failed to save notes to localStorage:", error);
+    }
   }, [notes, hasLoaded]);
 
   const editingNote = notes.find((note) => note.id === openNoteId);
+
+  const filteredNotes = notes.filter((note) => {
+    const q = search.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      note.title.toLowerCase().includes(q) ||
+      note.verse.toLowerCase().includes(q) ||
+      note.book.toLowerCase().includes(q) ||
+      note.content.toLowerCase().includes(q);
+    const matchesBook = bookFilter === null || note.book === bookFilter;
+    const matchesCategory =
+      categoryFilter.length === 0 || categoryFilter.includes(note.category);
+    return matchesSearch && matchesBook && matchesCategory;
+  });
 
   function handleSave(values: NoteFormValues) {
     if (editingNote) {
@@ -47,31 +71,72 @@ export default function Home() {
         prev.map((note) => (note.id === editingNote.id ? { ...note, ...values } : note))
       );
     } else {
-      setNotes((prev) => [{ ...values, id: crypto.randomUUID() }, ...prev]);
+      setNotes((prev) => [
+        { ...values, id: crypto.randomUUID(), createdAt: new Date().toISOString() },
+        ...prev,
+      ]);
     }
   }
 
+  const bookCounts = new Map<string, number>();
+  for (const note of notes) {
+    bookCounts.set(note.book, (bookCounts.get(note.book) ?? 0) + 1);
+  }
+  const books = [...bookCounts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  // books: [string, number][]  → e.g. [["Habakkuk", 2], ["Proverbs", 5]]
+
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar books={books} activeBook={bookFilter} onSelectBook={setBookFilter} />
       <SidebarInset>
         <header className="flex items-center gap-3 border-b p-4">
           <SidebarTrigger />
           <Separator orientation="vertical" className="h-6" />
           <SearchBar value={search} onChange={setSearch} />
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="outline">
+                  Tags{categoryFilter.length > 0 ? ` (${categoryFilter.length})` : ""}
+                </Button>
+              }
+            />
+            <DropdownMenuContent>
+              {NOTE_CATEGORIES.map((c) => (
+                <DropdownMenuCheckboxItem
+                  key={c}
+                  checked={categoryFilter.includes(c)}
+                  onCheckedChange={(checked) =>
+                    setCategoryFilter((prev) =>
+                      checked ? [...prev, c] : prev.filter((x) => x !== c)
+                    )
+                  }
+                >
+                  {c}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button onClick={() => setIsCreating(true)}>New Note</Button>
         </header>
         <main className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
-          {notes.map((note) => (
-            <NoteCard
-              key={note.id}
-              title={note.title}
-              verse={note.verse}
-              book={note.book}
-              content={note.content}
-              onOpen={() => setOpenNoteId(note.id)}
-            />
-          ))}
+          {filteredNotes.length === 0 ? (
+            <p className="col-span-full text-center text-muted-foreground">
+              No notes match your filters.
+            </p>
+          ) : (
+            filteredNotes.map((note) => (
+              <NoteCard
+                key={note.id}
+                title={note.title}
+                verse={note.verse}
+                book={note.book}
+                category={note.category}
+                content={note.content}
+                onOpen={() => setOpenNoteId(note.id)}
+              />
+            ))
+          )}
         </main>
       </SidebarInset>
       <NoteModal

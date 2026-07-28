@@ -15,11 +15,20 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { NOTE_CATEGORIES, type NoteCategory } from "@/lib/types";
 
 export type NoteFormValues = {
   title: string;
   verse: string;
   book: string;
+  category: NoteCategory;
   content: string;
 };
 
@@ -37,6 +46,7 @@ export function NoteModal({
   const [title, setTitle] = useState("");
   const [verse, setVerse] = useState("");
   const [book, setBook] = useState("");
+  const [category, setCategory] = useState<NoteCategory>(NOTE_CATEGORIES[0]);
   const [content, setContent] = useState("");
 
   // (re)fill the form whenever the modal opens, either from initialValues (edit) or blank (create)
@@ -45,12 +55,13 @@ export function NoteModal({
       setTitle(initialValues?.title ?? "");
       setVerse(initialValues?.verse ?? "");
       setBook(initialValues?.book ?? "");
+      setCategory(initialValues?.category ?? NOTE_CATEGORIES[0]);
       setContent(initialValues?.content ?? "");
     }
   }, [open, initialValues]);
 
   function handleSave() {
-    onSave({ title, verse, book, content });
+    onSave({ title, verse, book, category, content });
     onOpenChange(false);
   }
 
@@ -87,6 +98,21 @@ export function NoteModal({
               value={book}
               onChange={(e) => setBook(e.target.value)}
             />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="note-modal-category">Category</FieldLabel>
+            <Select value={category} onValueChange={(value) => setCategory(value as NoteCategory)}>
+              <SelectTrigger id="note-modal-category" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {NOTE_CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
           <Field>
             <FieldLabel htmlFor="note-modal-content">Content</FieldLabel>
