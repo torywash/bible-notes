@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { BookCombobox } from "@/components/book-combobox";
 import { NOTE_CATEGORIES, type NoteCategory } from "@/lib/types";
 
 export type NoteFormValues = {
@@ -93,17 +94,11 @@ export function NoteModal({
           </Field>
           <Field>
             <FieldLabel htmlFor="note-modal-book">Book</FieldLabel>
-            <Input
+            <BookCombobox
               id="note-modal-book"
-              placeholder="Proverbs"
               value={book}
-              onChange={(e) => setBook(e.target.value)}
-              readOnly={category === "Prayer"}
-              className={
-                category === "Prayer"
-                  ? "cursor-not-allowed bg-muted text-muted-foreground"
-                  : undefined
-              }
+              onChange={setBook}
+              disabled={category === "Prayer"}
             />
           </Field>
           <Field>

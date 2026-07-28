@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NOTE_CATEGORIES, type Note, type NoteCategory } from "@/lib/types";
+import { BIBLE_BOOKS } from "@/lib/scripture";
 
 export default function Home() {
   const [search, setSearch] = useState("");
@@ -82,8 +83,12 @@ export default function Home() {
   for (const note of notes) {
     bookCounts.set(note.book, (bookCounts.get(note.book) ?? 0) + 1);
   }
-  const books = [...bookCounts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  // books: [string, number][]  → e.g. [["Habakkuk", 2], ["Proverbs", 5]]
+  const bookOrder = (book: string) => {
+    const index = (BIBLE_BOOKS as readonly string[]).indexOf(book);
+    return index === -1 ? BIBLE_BOOKS.length : index;
+  };
+  const books = [...bookCounts.entries()].sort((a, b) => bookOrder(a[0]) - bookOrder(b[0]));
+  // books: [string, number][]  → e.g. [["Genesis", 2], ["Proverbs", 5]], canonical order, non-Bible entries (e.g. "Prayer") last
 
   return (
     <SidebarProvider>
