@@ -89,7 +89,12 @@ export function NoteModal({
               placeholder="Proverbs 10:12"
               value={verse}
               onChange={(e) => setVerse(e.target.value)}
-              className={verse === "Prayer" ? "text-muted-foreground" : undefined}
+              readOnly={category === "Prayer"}
+              className={
+                category === "Prayer"
+                  ? "cursor-not-allowed bg-muted text-muted-foreground"
+                  : undefined
+              }
             />
           </Field>
           <Field>
@@ -109,8 +114,8 @@ export function NoteModal({
                 const nextCategory = value as NoteCategory;
                 setCategory(nextCategory);
                 if (nextCategory === "Prayer") {
-                  if (book.trim() === "") setBook("Prayer");
-                  if (verse.trim() === "") setVerse("Prayer");
+                  setBook("Prayer");
+                  setVerse("Prayer");
                 }
               }}
             >
