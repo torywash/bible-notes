@@ -88,6 +88,7 @@ export function NoteModal({
               placeholder="Proverbs 10:12"
               value={verse}
               onChange={(e) => setVerse(e.target.value)}
+              className={verse === "Prayer" ? "text-muted-foreground" : undefined}
             />
           </Field>
           <Field>
@@ -97,11 +98,27 @@ export function NoteModal({
               placeholder="Proverbs"
               value={book}
               onChange={(e) => setBook(e.target.value)}
+              readOnly={category === "Prayer"}
+              className={
+                category === "Prayer"
+                  ? "cursor-not-allowed bg-muted text-muted-foreground"
+                  : undefined
+              }
             />
           </Field>
           <Field>
             <FieldLabel htmlFor="note-modal-category">Category</FieldLabel>
-            <Select value={category} onValueChange={(value) => setCategory(value as NoteCategory)}>
+            <Select
+              value={category}
+              onValueChange={(value) => {
+                const nextCategory = value as NoteCategory;
+                setCategory(nextCategory);
+                if (nextCategory === "Prayer") {
+                  if (book.trim() === "") setBook("Prayer");
+                  if (verse.trim() === "") setVerse("Prayer");
+                }
+              }}
+            >
               <SelectTrigger id="note-modal-category" className="w-full">
                 <SelectValue />
               </SelectTrigger>

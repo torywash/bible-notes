@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { NoteCategory } from "@/lib/types";
+import { CATEGORY_BADGE_CLASSES, type NoteCategory } from "@/lib/types";
 
 export function NoteCard({
   title,
@@ -31,8 +31,8 @@ export function NoteCard({
   return (
     <Card size="sm">
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{verse}</CardDescription>
+        <CardTitle className="line-clamp-1">{title}</CardTitle>
+        <CardDescription className="line-clamp-1 min-h-[1.25rem]">{verse}</CardDescription>
         <CardAction>
           {/* TODO: dropdown-menu for edit/delete, or drop this and rely on onOpen */}
         </CardAction>
@@ -45,7 +45,9 @@ export function NoteCard({
       <CardFooter className="justify-between">
         <div className="flex gap-2">
           <Badge variant="secondary">{book}</Badge>
-          <Badge variant="outline">{category}</Badge>
+          <Badge variant="outline" className={CATEGORY_BADGE_CLASSES[category]}>
+            {category}
+          </Badge>
         </div>
         <Button variant="link" size="sm" onClick={onOpen}>
           View Note
