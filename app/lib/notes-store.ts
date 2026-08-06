@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 
 import type { Note } from "@/lib/types";
 import type { NoteFormValues } from "@/components/notes/note-modal";
@@ -86,22 +87,30 @@ export function useNotes() {
   const saveNote = useCallback(
     async (values: NoteFormValues, editingId?: string) => {
       if (isAuthenticated) {
-        if (editingId) {
-          const res = await fetch(`/api/notes/${editingId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(values),
-          });
-          const updated: Note = await res.json();
-          setNotes((prev) => prev.map((note) => (note.id === editingId ? updated : note)));
-        } else {
-          const res = await fetch("/api/notes", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(values),
-          });
-          const created: Note = await res.json();
-          setNotes((prev) => [created, ...prev]);
+        try {
+          if (editingId) {
+            const res = await fetch(`/api/notes/${editingId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(values),
+            });
+            if (!res.ok) throw new Error(`Failed to save note (${res.status})`);
+            const updated: Note = await res.json();
+            setNotes((prev) => prev.map((note) => (note.id === editingId ? updated : note)));
+          } else {
+            const res = await fetch("/api/notes", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(values),
+            });
+            if (!res.ok) throw new Error(`Failed to save note (${res.status})`);
+            const created: Note = await res.json();
+            setNotes((prev) => [created, ...prev]);
+          }
+        } catch (error) {
+          console.error("Failed to save note:", error);
+          toast.error("Failed to save note. Please try again.");
+          throw error;
         }
         return;
       }
@@ -128,7 +137,14 @@ export function useNotes() {
   const deleteNote = useCallback(
     async (id: string) => {
       if (isAuthenticated) {
-        await fetch(`/api/notes/${id}`, { method: "DELETE" });
+        try {
+          const res = await fetch(`/api/notes/${id}`, { method: "DELETE" });
+          if (!res.ok) throw new Error(`Failed to delete note (${res.status})`);
+        } catch (error) {
+          console.error("Failed to delete note:", error);
+          toast.error("Failed to delete note. Please try again.");
+          throw error;
+        }
       }
       setNotes((prev) => prev.filter((note) => note.id !== id));
     },

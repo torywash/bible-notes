@@ -57,11 +57,13 @@ export default function Home() {
   });
 
   function handleSave(values: NoteFormValues) {
-    saveNote(values, editingNote?.id);
+    return saveNote(values, editingNote?.id);
   }
 
   function handleDelete(id: string) {
-    deleteNote(id);
+    deleteNote(id).catch(() => {
+      // error already surfaced via toast in useNotes()
+    });
   }
 
   const bookCounts = new Map<string, number>();
