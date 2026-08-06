@@ -21,6 +21,7 @@ export const CATEGORY_BADGE_CLASSES: Record<NoteCategory, string> = {
 };
 export interface Note {
     id: string;
+    userId: string;
     title: string;
     verse: string;
     book: string;

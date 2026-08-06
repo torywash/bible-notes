@@ -14,6 +14,8 @@ Bible Notes lets you browse Scripture by book and chapter and attach personal st
 | Language | TypeScript |
 | UI | React 19 |
 | Styling | Tailwind CSS 4 |
+| Database | MongoDB Atlas |
+| Auth | Auth.js (NextAuth v5), GitHub OAuth |
 | Linting | ESLint (`eslint-config-next`) |
 
 ## Features
@@ -21,7 +23,9 @@ Bible Notes lets you browse Scripture by book and chapter and attach personal st
 - **Browse by book and chapter** — navigate Scripture structure (e.g. Genesis → Chapter 1)
 - **Read view** — clean, scrollable verse display
 - **Notes CRUD** — add, view, edit, and delete notes attached to a verse or chapter, with delete confirmation
-- **Persistence** — notes survive a page refresh via `localStorage`
+- **Cloud persistence** — signed-in notes are stored in MongoDB Atlas and synced across devices
+- **Guest/demo mode** — try the full app with no account; notes are kept in `localStorage` only, so recruiters/visitors can explore without touching real data
+- **Auth** — GitHub OAuth via Auth.js, restricted to a single owner account
 - **Responsive & accessible** — works on desktop and mobile, keyboard-navigable with visible focus states
 - **Light/dark theme support**
 
@@ -32,8 +36,7 @@ Bible Notes lets you browse Scripture by book and chapter and attach personal st
 - Verse highlighting for annotated verses
 - Export notes as Markdown or JSON
 - Multiple Bible translations
-- Backend persistence (SQLite/Postgres) in place of `localStorage`
-- Multi-user auth with private notes per user
+- Transition animations (tabs, cards, view changes)
 
 ## Why This Project
 
@@ -43,26 +46,56 @@ This project was built to get real, practical reps with the tools most relevant 
 
 ```bash
 git clone https://github.com/<your-username>/bible-notes.git
-cd bible-notes/bible-notes
+cd bible-notes/app
 npm install
+cp .env.example .env.local   # fill in the values, see below
 npm run dev
 ```
 
 Then open [http://localhost:3000](http://localhost:3000) in your browser.
 
+### Environment variables
+
+The app supports two modes: a signed-in owner account backed by MongoDB (synced across devices),
+and a **guest/demo mode** that behaves exactly like the original `localStorage`-only version — no
+account needed, notes stay in the browser. Guest mode works with zero configuration; the env vars
+below are only required for the signed-in path.
+
+Copy `app/.env.example` to `app/.env.local` and fill in:
+
+| Variable | Where to get it |
+|---|---|
+| `MONGODB_URI` | [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register) → Database → Connect → Drivers. If your network blocks DNS SRV lookups (`querySrv ECONNREFUSED`, common on some campus/ISP networks), use the standard (non-SRV) connection string instead — it needs `authSource=admin` and `replicaSet` explicitly, which Atlas includes by default. |
+| `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | [GitHub → Settings → Developer settings → OAuth Apps](https://github.com/settings/developers). Callback URL: `http://localhost:3000/api/auth/callback/github`. |
+| `AUTH_GITHUB_OWNER_ID` | Your numeric GitHub user ID, from `https://api.github.com/users/<your-username>`. Sign-in is restricted to this account only. |
+| `AUTH_SECRET` | Generate with `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`. |
+| `AUTH_URL` | `http://localhost:3000` for local dev; your deployed URL in production. |
+
+Never commit `.env.local` — it's gitignored. `.env.example` (committed) has placeholder keys only.
+
 ## Project Structure
 
 ```
 bible-notes/
-└── bible-notes/
+└── app/
+    ├── auth.ts              # Auth.js config (GitHub provider, owner allowlist)
     ├── app/
-    │   ├── layout.tsx    # Root layout
-    │   ├── page.tsx      # Home page
-    │   └── globals.css   # Global styles / Tailwind entry
-    ├── public/           # Static assets
+    │   ├── layout.tsx       # Root layout
+    │   ├── page.tsx         # Home page
+    │   ├── login/           # Sign in / continue as guest
+    │   ├── api/
+    │   │   ├── auth/[...nextauth]/  # Auth.js route handler
+    │   │   └── notes/        # Notes CRUD, MongoDB-backed
+    │   └── globals.css      # Global styles / Tailwind entry
+    ├── lib/
+    │   ├── mongodb.ts        # MongoDB client singleton
+    │   ├── notes-store.ts    # useNotes() hook (Mongo vs. guest localStorage)
+    │   └── types.tsx         # Note type, categories
+    ├── .env.example          # Required env vars (see above)
     └── package.json
 ```
 
 ## Status
 
-Actively in development — core CRUD and persistence features are being built out first, followed by polish (empty/loading states, responsive/dark-mode pass) and one stretch feature.
+Actively in development — core CRUD, MongoDB persistence, and auth are in place. Next up: transition
+animations and a broader security pass on secrets handling.
