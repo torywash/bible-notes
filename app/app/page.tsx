@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -12,6 +11,7 @@ import { NoteCard } from "@/components/notes/note-card";
 import { NoteModal, type NoteFormValues } from "@/components/notes/note-modal";
 import { NoteViewDialog } from "@/components/notes/view-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AccountMenu } from "@/components/account-menu";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { NOTE_CATEGORIES, type NoteCategory } from "@/lib/types";
 import { BIBLE_BOOKS } from "@/lib/scripture";
-import { GUEST_MODE_KEY, useNotes } from "@/lib/notes-store";
+import { useNotes } from "@/lib/notes-store";
 
 export default function Home() {
   const router = useRouter();
@@ -64,11 +64,6 @@ export default function Home() {
     deleteNote(id);
   }
 
-  function handleExitGuestMode() {
-    localStorage.removeItem(GUEST_MODE_KEY);
-    router.replace("/login");
-  }
-
   const bookCounts = new Map<string, number>();
   for (const note of notes) {
     bookCounts.set(note.book, (bookCounts.get(note.book) ?? 0) + 1);
@@ -89,14 +84,8 @@ export default function Home() {
       <AppSidebar books={books} activeBook={bookFilter} onSelectBook={setBookFilter} />
       <SidebarInset>
         {isGuest && (
-          <div className="flex items-center justify-center gap-3 border-b bg-amber-100 px-4 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+          <div className="flex items-center justify-center border-b bg-amber-100 px-4 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
             <span>Demo Mode — notes are saved only in this browser, not synced anywhere.</span>
-            <button
-              onClick={handleExitGuestMode}
-              className="underline underline-offset-2 hover:no-underline"
-            >
-              Exit demo
-            </button>
           </div>
         )}
         <header className="flex items-center gap-4 border-b p-5">
@@ -130,11 +119,7 @@ export default function Home() {
             </DropdownMenu>
             <Button size="lg" onClick={() => setIsCreating(true)}>New Note</Button>
             <ThemeToggle />
-            {isAuthenticated && (
-              <Button variant="outline" size="lg" onClick={() => signOut({ callbackUrl: "/login" })}>
-                Sign out
-              </Button>
-            )}
+            <AccountMenu isAuthenticated={isAuthenticated} isGuest={isGuest} />
           </div>
         </header>
         <main className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
