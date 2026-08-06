@@ -16,48 +16,58 @@ export function useNotes() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
 
-  // Determine guest-mode + load notes: Mongo-backed API when signed in,
-  // localStorage in guest mode. Wrapped in a nested async function (rather
-  // than setting state directly in the effect body) per the
-  // react-hooks/set-state-in-effect rule.
+  // Guest mode is fully client-side and must keep working even if the auth
+  // backend is down or misconfigured — so this check runs independently of
+  // useSession()'s status, rather than waiting for it to resolve.
   useEffect(() => {
-    if (status === "loading") return;
+    if (isAuthenticated) return; // the Mongo-backed effect below takes over
 
     let cancelled = false;
 
     (async () => {
-      if (isAuthenticated) {
-        setIsGuest(false);
-        try {
-          const res = await fetch("/api/notes");
-          if (!res.ok) throw new Error("Failed to load notes");
-          const data: Note[] = await res.json();
-          if (!cancelled) setNotes(data);
-        } catch (error) {
-          console.error("Failed to load notes:", error);
-        } finally {
-          if (!cancelled) setHasLoaded(true);
-        }
-        return;
-      }
-
       const guest = localStorage.getItem(GUEST_MODE_KEY) === "true";
       setIsGuest(guest);
-      if (guest) {
-        try {
-          const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-          if (saved && !cancelled) setNotes(JSON.parse(saved));
-        } catch (error) {
-          console.error("Failed to load notes from localStorage:", error);
-        }
+      if (!guest) return; // stay unloaded until session status settles
+
+      try {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (saved && !cancelled) setNotes(JSON.parse(saved));
+      } catch (error) {
+        console.error("Failed to load notes from localStorage:", error);
+      } finally {
+        if (!cancelled) setHasLoaded(true);
       }
-      if (!cancelled) setHasLoaded(true);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [status, isAuthenticated]);
+  }, [isAuthenticated]);
+
+  // Mongo-backed loading, once a real session is confirmed.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    let cancelled = false;
+
+    (async () => {
+      setIsGuest(false);
+      try {
+        const res = await fetch("/api/notes");
+        if (!res.ok) throw new Error("Failed to load notes");
+        const data: Note[] = await res.json();
+        if (!cancelled) setNotes(data);
+      } catch (error) {
+        console.error("Failed to load notes:", error);
+      } finally {
+        if (!cancelled) setHasLoaded(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
 
   // Guest mode persists to localStorage on every change; Mongo persists via
   // the API calls in saveNote/deleteNote directly, so no mirroring effect needed there.
