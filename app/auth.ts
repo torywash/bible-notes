@@ -4,7 +4,14 @@ import GitHub from "next-auth/providers/github";
 const ownerId = process.env.AUTH_GITHUB_OWNER_ID;
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [GitHub],
+  secret: process.env.AUTH_SECRET,
+  trustHost: true,
+  providers: [
+    GitHub({
+      clientId: process.env.AUTH_GITHUB_ID,
+      clientSecret: process.env.AUTH_GITHUB_SECRET,
+    }),
+  ],
   callbacks: {
     async signIn({ profile }) {
       if (!ownerId) return false;
