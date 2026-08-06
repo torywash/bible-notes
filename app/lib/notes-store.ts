@@ -12,23 +12,26 @@ const LOCAL_STORAGE_KEY = "notes";
 export function useNotes() {
   const { status } = useSession();
   const isAuthenticated = status === "authenticated";
-  const [isGuest, setIsGuest] = useState(false);
+  // Read synchronously on first render (not via effect) so `isGuest` is
+  // already correct before isSignedOut is ever computed — otherwise, on a
+  // client-side navigation into this page, `status` can already be
+  // "unauthenticated" (carried over from the previous page) while `isGuest`
+  // is still at its default `false`, making isSignedOut briefly true and
+  // bouncing straight back to /login before the guest flag is ever checked.
+  const [isGuest, setIsGuest] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem(GUEST_MODE_KEY) === "true"
+  );
   const [notes, setNotes] = useState<Note[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
 
-  // Guest mode is fully client-side and must keep working even if the auth
-  // backend is down or misconfigured — so this check runs independently of
-  // useSession()'s status, rather than waiting for it to resolve.
+  // Load notes for guest mode. Runs independently of useSession()'s status
+  // so it keeps working even if the auth backend is down or misconfigured.
   useEffect(() => {
-    if (isAuthenticated) return; // the Mongo-backed effect below takes over
+    if (isAuthenticated || !isGuest) return; // Mongo effect below takes over when authenticated
 
     let cancelled = false;
 
     (async () => {
-      const guest = localStorage.getItem(GUEST_MODE_KEY) === "true";
-      setIsGuest(guest);
-      if (!guest) return; // stay unloaded until session status settles
-
       try {
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (saved && !cancelled) setNotes(JSON.parse(saved));
@@ -42,7 +45,7 @@ export function useNotes() {
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isGuest]);
 
   // Mongo-backed loading, once a real session is confirmed.
   useEffect(() => {
