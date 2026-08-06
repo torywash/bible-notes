@@ -42,7 +42,7 @@ export function NoteModal({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialValues?: NoteFormValues;
-  onSave: (values: NoteFormValues) => void;
+  onSave: (values: NoteFormValues) => void | Promise<void>;
 }) {
   const [title, setTitle] = useState("");
   const [verse, setVerse] = useState("");
@@ -61,9 +61,14 @@ export function NoteModal({
     }
   }, [open, initialValues]);
 
-  function handleSave() {
-    onSave({ title, verse, book, category, content });
-    onOpenChange(false);
+  async function handleSave() {
+    try {
+      await onSave({ title, verse, book, category, content });
+      onOpenChange(false);
+    } catch {
+      // error is already surfaced via toast in the caller; keep the modal
+      // open so the user doesn't lose what they typed and can retry
+    }
   }
 
   return (
