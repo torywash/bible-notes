@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -17,41 +19,25 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { NOTE_CATEGORIES, type Note, type NoteCategory } from "@/lib/types";
+import { NOTE_CATEGORIES, type NoteCategory } from "@/lib/types";
 import { BIBLE_BOOKS } from "@/lib/scripture";
+import { GUEST_MODE_KEY, useNotes } from "@/lib/notes-store";
 
 export default function Home() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [viewingNoteId, setViewingNoteId] = useState<string | null>(null);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [hasLoaded, setHasLoaded] = useState(false);
   const [bookFilter, setBookFilter] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<NoteCategory[]>([]);
 
-  // runs once, after the component mounts in the browser
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("notes");
-      if (saved) setNotes(JSON.parse(saved));
-    } catch (error) {
-      console.error("Failed to load notes from localStorage:", error);
-    } finally {
-      setHasLoaded(true);
-    }
-  }, []);
+  const { notes, hasLoaded, isAuthenticated, isGuest, isSignedOut, saveNote, deleteNote } =
+    useNotes();
 
-  // runs every time `notes` changes, writing it back out
-  // (skipped until the load above finishes, so it never clobbers storage with the empty initial state)
   useEffect(() => {
-    if (!hasLoaded) return;
-    try {
-      localStorage.setItem("notes", JSON.stringify(notes));
-    } catch (error) {
-      console.error("Failed to save notes to localStorage:", error);
-    }
-  }, [notes, hasLoaded]);
+    if (isSignedOut) router.replace("/login");
+  }, [isSignedOut, router]);
 
   const viewingNote = notes.find((note) => note.id === viewingNoteId);
   const editingNote = notes.find((note) => note.id === editingNoteId);
@@ -71,20 +57,16 @@ export default function Home() {
   });
 
   function handleSave(values: NoteFormValues) {
-    if (editingNote) {
-      setNotes((prev) =>
-        prev.map((note) => (note.id === editingNote.id ? { ...note, ...values } : note))
-      );
-    } else {
-      setNotes((prev) => [
-        { ...values, id: crypto.randomUUID(), createdAt: new Date().toISOString() },
-        ...prev,
-      ]);
-    }
+    saveNote(values, editingNote?.id);
   }
 
   function handleDelete(id: string) {
-    setNotes((prev) => prev.filter((note) => note.id !== id));
+    deleteNote(id);
+  }
+
+  function handleExitGuestMode() {
+    localStorage.removeItem(GUEST_MODE_KEY);
+    router.replace("/login");
   }
 
   const bookCounts = new Map<string, number>();
@@ -98,10 +80,25 @@ export default function Home() {
   const books = [...bookCounts.entries()].sort((a, b) => bookOrder(a[0]) - bookOrder(b[0]));
   // books: [string, number][]  → e.g. [["Genesis", 2], ["Proverbs", 5]], canonical order, non-Bible entries (e.g. "Prayer") last
 
+  if (isSignedOut || !hasLoaded) {
+    return null;
+  }
+
   return (
     <SidebarProvider style={{ "--sidebar-width": "18rem" } as React.CSSProperties}>
       <AppSidebar books={books} activeBook={bookFilter} onSelectBook={setBookFilter} />
       <SidebarInset>
+        {isGuest && (
+          <div className="flex items-center justify-center gap-3 border-b bg-amber-100 px-4 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+            <span>Demo Mode — notes are saved only in this browser, not synced anywhere.</span>
+            <button
+              onClick={handleExitGuestMode}
+              className="underline underline-offset-2 hover:no-underline"
+            >
+              Exit demo
+            </button>
+          </div>
+        )}
         <header className="flex items-center gap-4 border-b p-5">
           <SidebarTrigger size="icon-lg" />
           <Separator orientation="vertical" className="h-8" />
@@ -133,6 +130,11 @@ export default function Home() {
             </DropdownMenu>
             <Button size="lg" onClick={() => setIsCreating(true)}>New Note</Button>
             <ThemeToggle />
+            {isAuthenticated && (
+              <Button variant="outline" size="lg" onClick={() => signOut({ callbackUrl: "/login" })}>
+                Sign out
+              </Button>
+            )}
           </div>
         </header>
         <main className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
